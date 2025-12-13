@@ -1,0 +1,13 @@
+[package]
+name = "trending-py"
+workspace.version = true
+workspace.edition = true
+workspace.license = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "trending"
+crate-type = ["cdylib"]
+
+[dependencies]
+workspace.pyo3 = true
