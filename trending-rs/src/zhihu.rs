@@ -1,14 +1,26 @@
-use reqwest::Client;
+use reqwest::Client as AsyncClient;
+#[cfg(feature = "blocking")]
+use reqwest::blocking::Client as BlockClient;
 use serde::{Deserialize, Serialize};
 
-use crate::common::{EmptyType, PlatformType, TrendingRes, TrendingsRes, not_empty_str, http_get};
-use crate::errors::Result;
+#[cfg(feature = "blocking")]
+use crate::common::block_http_get;
+use crate::{
+  common::{EmptyType, PlatformType, TrendingRes, TrendingsRes, http_get, not_empty_str},
+  errors::Result,
+};
 
 pub const TRENDING_ENDPOINT: &'static str = "https://api.zhihu.com/topstory/hot-lists/total";
 
-pub async fn trending(client: &Client) -> Result<TrendingsRes> {
+pub async fn trending(client: &AsyncClient) -> Result<TrendingsRes> {
   http_get::<EmptyType, EmptyType, ZhihuRes>(client, TRENDING_ENDPOINT, None, None, None)
     .await
+    .map(|r| r.into())
+}
+
+#[cfg(feature = "blocking")]
+pub fn block_trending(client: &BlockClient) -> Result<TrendingsRes> {
+  block_http_get::<EmptyType, EmptyType, ZhihuRes>(client, TRENDING_ENDPOINT, None, None, None)
     .map(|r| r.into())
 }
 

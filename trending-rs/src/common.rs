@@ -1,7 +1,9 @@
 use std::time::Duration;
 
+#[cfg(feature = "blocking")]
+use reqwest::blocking::Client as BlockClient;
 use reqwest::{
-  Client, Method, Proxy,
+  Client as AsyncClient, Method, Proxy,
   header::{AsHeaderName, HeaderMap, HeaderName, HeaderValue},
 };
 use serde::{Deserialize, Serialize};
@@ -10,17 +12,17 @@ use snafu::ResultExt;
 use crate::errors::{ReqwestClientSnafu, Result};
 
 pub struct TrendingClient {
-  client: Client,
+  client: AsyncClient,
 }
 
 impl TrendingClient {
   pub fn new() -> Self {
-    let client = Client::new();
+    let client = AsyncClient::new();
     Self { client }
   }
-  
+
   pub fn new_with_options(options: ClientOptions) -> Result<Self> {
-    let mut client_builder = Client::builder();
+    let mut client_builder = AsyncClient::builder();
     if let Some(timeout) = options.timeout {
       client_builder = client_builder.timeout(timeout);
     }
@@ -33,7 +35,7 @@ impl TrendingClient {
       .context(ReqwestClientSnafu)?;
     Ok(TrendingClient { client })
   }
-  
+
   pub async fn trending_zhihu(&self) -> Result<TrendingsRes> {
     crate::zhihu::trending(&self.client).await
   }
@@ -44,6 +46,46 @@ impl TrendingClient {
 
   pub async fn trending_toutiao(&self) -> Result<TrendingsRes> {
     crate::toutiao::trending(&self.client).await
+  }
+}
+
+#[cfg(feature = "blocking")]
+pub struct BlockTrendingClient {
+  client: BlockClient,
+}
+
+#[cfg(feature = "blocking")]
+impl BlockTrendingClient {
+  pub fn new() -> Self {
+    let client = BlockClient::new();
+    Self { client }
+  }
+
+  pub fn new_with_options(options: ClientOptions) -> Result<Self> {
+    let mut client_builder = BlockClient::builder();
+    if let Some(timeout) = options.timeout {
+      client_builder = client_builder.timeout(timeout);
+    }
+    if let Some(proxy) = options.proxy {
+      client_builder = client_builder.proxy(proxy);
+    }
+    let client = client_builder
+      .default_headers(options.headers)
+      .build()
+      .context(ReqwestClientSnafu)?;
+    Ok(BlockTrendingClient { client })
+  }
+
+  pub fn trending_zhihu(&self) -> Result<TrendingsRes> {
+    crate::zhihu::block_trending(&self.client)
+  }
+
+  pub fn trending_weibo(&self) -> Result<TrendingsRes> {
+    crate::weibo::block_trending(&self.client)
+  }
+
+  pub fn trending_toutiao(&self) -> Result<TrendingsRes> {
+    crate::toutiao::blocking_trending(&self.client)
   }
 }
 
@@ -138,7 +180,7 @@ pub(crate) async fn http_get<
   B: Serialize + ?Sized,
   R: for<'de> Deserialize<'de>,
 >(
-  client: &Client,
+  client: &AsyncClient,
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
@@ -152,7 +194,7 @@ pub(crate) async fn _http_post<
   B: Serialize + ?Sized,
   R: for<'de> Deserialize<'de>,
 >(
-  client: &Client,
+  client: &AsyncClient,
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
@@ -166,7 +208,7 @@ async fn http_execute<
   B: Serialize + ?Sized,
   R: for<'de> Deserialize<'de>,
 >(
-  client: &Client,
+  client: &AsyncClient,
   method: Method,
   url: &str,
   headers: Option<HeaderMap>,
@@ -189,6 +231,67 @@ async fn http_execute<
     .context(ReqwestClientSnafu)?
     .json::<R>()
     .await
+    .context(ReqwestClientSnafu)?;
+  Ok(res)
+}
+
+#[cfg(feature = "blocking")]
+pub(crate) fn block_http_get<
+  Q: Serialize + ?Sized,
+  B: Serialize + ?Sized,
+  R: for<'de> Deserialize<'de>,
+>(
+  client: &BlockClient,
+  url: &str,
+  headers: Option<HeaderMap>,
+  queries: Option<&Q>,
+  json: Option<&B>,
+) -> Result<R> {
+  block_http_execute(client, Method::GET, url, headers, queries, json)
+}
+
+#[cfg(feature = "blocking")]
+pub(crate) fn _block_http_post<
+  Q: Serialize + ?Sized,
+  B: Serialize + ?Sized,
+  R: for<'de> Deserialize<'de>,
+>(
+  client: &BlockClient,
+  url: &str,
+  headers: Option<HeaderMap>,
+  queries: Option<&Q>,
+  json: Option<&B>,
+) -> Result<R> {
+  block_http_execute(client, Method::POST, url, headers, queries, json)
+}
+
+#[cfg(feature = "blocking")]
+fn block_http_execute<
+  Q: Serialize + ?Sized,
+  B: Serialize + ?Sized,
+  R: for<'de> Deserialize<'de>,
+>(
+  client: &BlockClient,
+  method: Method,
+  url: &str,
+  headers: Option<HeaderMap>,
+  queries: Option<&Q>,
+  json: Option<&B>,
+) -> Result<R> {
+  let mut req = client.request(method, url);
+  if let Some(headers) = headers {
+    req = req.headers(headers);
+  }
+  if let Some(queries) = queries {
+    req = req.query(queries);
+  }
+  if let Some(json) = json {
+    req = req.json(json);
+  }
+  let res = req
+    .send()
+    .context(ReqwestClientSnafu)?
+    .json::<R>()
     .context(ReqwestClientSnafu)?;
   Ok(res)
 }

@@ -12,3 +12,7 @@ snafu.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true
+
+[features]
+default = ["blocking"]
+blocking = ["reqwest/blocking"]
