@@ -1,0 +1,7 @@
+.zed
+.vscode
+.idea
+.cache
+log/
+logs/
+target/
