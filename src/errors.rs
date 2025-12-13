@@ -50,37 +50,15 @@ pub enum Error {
     location: Location,
   },
 
-  #[snafu(display("Failed to convert enum from value"))]
-  EnumFromValue {
-    value: String,
-    class: String,
-    #[snafu(implicit)]
-    location: Location,
-  },
-
   #[snafu(display("{}", message))]
   PlainMessage {
     message: String,
     #[snafu(implicit)]
     location: Location,
   },
-
-  #[snafu(display("Impossible error!"))]
-  Impossible {
-    #[snafu(implicit)]
-    location: Location,
-  },
-}
-
-impl Error {
-  #[track_caller]
-  pub fn enum_from_value<T>(value: impl Into<String>, class: impl Into<String>) -> Result<T> {
-    let location = std::panic::Location::caller();
-    let err = Error::EnumFromValue {
-      value: value.into(),
-      class: class.into(),
-      location: Location::new(location.file(), location.line(), location.column()),
-    };
-    Err(err)
-  }
+  // #[snafu(display("Impossible error!"))]
+  // Impossible {
+  // #[snafu(implicit)]
+  // location: Location,
+  // },
 }

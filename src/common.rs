@@ -14,6 +14,26 @@ pub struct TrendingClient {
 }
 
 impl TrendingClient {
+  pub fn new() -> Self {
+    let client = Client::new();
+    Self { client }
+  }
+  
+  pub fn new_with_options(options: ClientOptions) -> Result<Self> {
+    let mut client_builder = Client::builder();
+    if let Some(timeout) = options.timeout {
+      client_builder = client_builder.timeout(timeout);
+    }
+    if let Some(proxy) = options.proxy {
+      client_builder = client_builder.proxy(proxy);
+    }
+    let client = client_builder
+      .default_headers(options.headers)
+      .build()
+      .context(ReqwestClientSnafu)?;
+    Ok(TrendingClient { client })
+  }
+  
   pub async fn trending_zhihu(&self) -> Result<TrendingsRes> {
     crate::zhihu::trending(&self.client).await
   }
@@ -64,21 +84,6 @@ impl ClientOptions {
 
   pub fn contains_header(&self, key: impl AsHeaderName) -> bool {
     self.headers.contains_key(key)
-  }
-
-  pub fn build_client(self) -> Result<TrendingClient> {
-    let mut client_builder = Client::builder();
-    if let Some(timeout) = self.timeout {
-      client_builder = client_builder.timeout(timeout);
-    }
-    if let Some(proxy) = self.proxy {
-      client_builder = client_builder.proxy(proxy);
-    }
-    let client = client_builder
-      .default_headers(self.headers)
-      .build()
-      .context(ReqwestClientSnafu)?;
-    Ok(TrendingClient { client })
   }
 }
 
@@ -142,7 +147,7 @@ pub(crate) async fn http_get<
   http_execute(client, Method::GET, url, headers, queries, json).await
 }
 
-pub(crate) async fn http_post<
+pub(crate) async fn _http_post<
   Q: Serialize + ?Sized,
   B: Serialize + ?Sized,
   R: for<'de> Deserialize<'de>,
