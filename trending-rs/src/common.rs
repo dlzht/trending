@@ -89,10 +89,11 @@ impl BlockTrendingClient {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct ClientOptions {
-  headers: HeaderMap,
-  timeout: Option<Duration>,
-  proxy: Option<Proxy>,
+  pub headers: HeaderMap,
+  pub timeout: Option<Duration>,
+  pub proxy: Option<Proxy>,
 }
 
 impl ClientOptions {
@@ -137,11 +138,22 @@ pub enum PlatformType {
   #[serde(rename = "weibo")]
   Weibo,
 
-  #[serde(rename = "Toutiao")]
+  #[serde(rename = "toutiao")]
   Toutiao,
 
   #[serde(untagged)]
   Other(String),
+}
+
+impl PlatformType {
+  pub fn to_str(&self) -> &str {
+    match self {
+      PlatformType::Zhihu => "zhihu",
+      PlatformType::Weibo => "weibo",
+      PlatformType::Toutiao => "toutiao",
+      PlatformType::Other(other) => other.as_str(),
+    }
+  }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

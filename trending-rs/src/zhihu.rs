@@ -38,21 +38,27 @@ struct ZhihuData {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ZhihuTarget {
+  #[serde(rename = "id")]
+  id: u64,
+
+  #[serde(rename = "type")]
+  kind: String,
+
   #[serde(rename = "title")]
   title: String,
 
-  #[serde(rename = "url")]
-  url: String,
-
   #[serde(rename = "detail_text", skip_serializing_if = "Option::is_none")]
   detail_text: Option<String>,
+  
+  // #[serde(rename = "url")]
+  // url: String,
 }
 
 impl From<ZhihuData> for TrendingRes {
   fn from(value: ZhihuData) -> Self {
     Self {
       title: value.target.title,
-      url: value.target.url,
+      url: format!("https://www.zhihu.com/{}/{}", value.target.kind, value.target.id),
       trend: not_empty_str(value.target.detail_text),
     }
   }

@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "trending-rs"
+    "trending-rs",
+    "trending-py",
 ]
 resolver = "3"
 
@@ -10,6 +11,8 @@ edition = "2024"
 license = "Apache-2.0"
 
 [workspace.dependencies]
+trending = { path = "./trending-rs" }
+
 pyo3 = "0.27.0"
 reqwest = { version = "0.12", features = ["json", "stream"] }
 serde = { version = "1.0", features = ["derive"] }

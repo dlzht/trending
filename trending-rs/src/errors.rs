@@ -2,11 +2,11 @@ use std::backtrace::Backtrace;
 
 use snafu::{Location, Snafu};
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, TrendingError>;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
-pub enum Error {
+pub enum TrendingError {
   #[snafu(display("Failed to get env variable"))]
   EnvVariable {
     #[snafu(source)]
@@ -27,9 +27,20 @@ pub enum Error {
     backtrace: Backtrace,
   },
 
-  #[snafu(display("Invalid http header: {}", header))]
-  ReqwestHeader {
-    header: String,
+  #[snafu(display("Invalid http header name: {}", name))]
+  ReqwestHeaderName {
+    name: String,
+    #[snafu(source)]
+    source: reqwest::header::InvalidHeaderName,
+    #[snafu(implicit)]
+    location: Location,
+  },
+  
+  #[snafu(display("Invalid http header value: {}", value))]
+  ReqwestHeaderValue {
+    value: String,
+    #[snafu(source)]
+    source: reqwest::header::InvalidHeaderValue,
     #[snafu(implicit)]
     location: Location,
   },
