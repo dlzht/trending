@@ -1,0 +1,19 @@
+[package]
+name = "trending-js"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "trending_js"
+crate-type = ["cdylib"]
+
+[dependencies]
+trending.workspace = true
+
+js-sys.workspace = true
+reqwest.workspace = true
+snafu.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
