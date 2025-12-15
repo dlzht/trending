@@ -1,10 +1,9 @@
 use std::time::Duration;
 
-use reqwest::Proxy;
 #[cfg(feature = "blocking")]
 use reqwest::blocking::Client as BlockClient;
 use reqwest::{
-  Client as AsyncClient, Method,
+  Client as AsyncClient, Method, Proxy,
   header::{AsHeaderName, HeaderMap, HeaderName, HeaderValue},
 };
 use serde::{Deserialize, Serialize};
@@ -48,6 +47,10 @@ impl TrendingClient {
   pub async fn trending_toutiao(&self) -> Result<TrendingsRes> {
     crate::toutiao::trending(&self.client).await
   }
+
+  pub async fn trending_tencent(&self) -> Result<TrendingsRes> {
+    crate::tencent::trending(&self.client).await
+  }
 }
 
 #[cfg(feature = "blocking")]
@@ -87,6 +90,10 @@ impl BlockTrendingClient {
 
   pub fn trending_toutiao(&self) -> Result<TrendingsRes> {
     crate::toutiao::blocking_trending(&self.client)
+  }
+
+  pub fn trending_tencent(&self) -> Result<TrendingsRes> {
+    crate::tencent::blocking_trending(&self.client)
   }
 }
 
@@ -142,6 +149,9 @@ pub enum PlatformType {
   #[serde(rename = "toutiao")]
   Toutiao,
 
+  #[serde(rename = "tencent")]
+  Tencent,
+
   #[serde(untagged)]
   Other(String),
 }
@@ -152,6 +162,7 @@ impl PlatformType {
       PlatformType::Zhihu => "zhihu",
       PlatformType::Weibo => "weibo",
       PlatformType::Toutiao => "toutiao",
+      PlatformType::Tencent => "tencent",
       PlatformType::Other(other) => other.as_str(),
     }
   }

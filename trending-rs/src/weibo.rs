@@ -36,7 +36,7 @@ pub struct WeiboRes {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WeiboData {
-  #[serde(rename = "hotList")]
+  #[serde(rename = "hotList", skip_serializing_if = "Vec::is_empty", default)]
   hot_list: Vec<WeiboHot>,
 }
 

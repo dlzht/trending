@@ -49,7 +49,7 @@ mod trending {
   pub struct ClientOptions {
     options: RClientOptions,
   }
-  
+
   impl Display for ClientOptions {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
       write!(f, "{:?}", self)
@@ -176,6 +176,11 @@ mod trending {
 
     pub fn trending_toutiao(&self) -> Result<TrendingsRes> {
       let res = self.client.trending_toutiao()?;
+      Ok(res.into())
+    }
+
+    pub fn trending_tencent(&self) -> Result<TrendingsRes> {
+      let res = self.client.trending_tencent()?;
       Ok(res.into())
     }
   }
