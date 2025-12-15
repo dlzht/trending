@@ -1307,18 +1307,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "trending-js"
-version = "0.1.0"
-dependencies = [
- "js-sys",
- "reqwest",
- "snafu",
- "trending",
- "wasm-bindgen",
- "wasm-bindgen-futures",
-]
-
-[[package]]
 name = "trending-py"
 version = "0.1.0"
 dependencies = [

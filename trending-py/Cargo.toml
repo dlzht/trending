@@ -10,7 +10,7 @@ name = "trending"
 crate-type = ["cdylib"]
 
 [dependencies]
-trending.workspace = true
+trending = { workspace = true, features = ["blocking"] }
 
 pyo3.workspace = true
 reqwest.workspace = true

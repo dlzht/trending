@@ -19,6 +19,7 @@ pub async fn trending(client: &AsyncClient) -> Result<TrendingsRes> {
     .map(|r| r.into())
 }
 
+#[cfg(feature = "blocking")]
 pub fn blocking_trending(client: &BlockClient) -> Result<TrendingsRes> {
   block_http_get::<EmptyType, EmptyType, TouTiaoRes>(client, TRENDING_ENDPOINT, None, None, None)
     .map(|r| r.into())

@@ -1,9 +1,10 @@
 use std::time::Duration;
 
+use reqwest::Proxy;
 #[cfg(feature = "blocking")]
 use reqwest::blocking::Client as BlockClient;
 use reqwest::{
-  Client as AsyncClient, Method, Proxy,
+  Client as AsyncClient, Method,
   header::{AsHeaderName, HeaderMap, HeaderName, HeaderValue},
 };
 use serde::{Deserialize, Serialize};
