@@ -51,6 +51,10 @@ impl TrendingClient {
   pub async fn trending_tencent(&self) -> Result<TrendingsRes> {
     crate::tencent::trending(&self.client).await
   }
+
+  pub async fn trending_tieba(&self) -> Result<TrendingsRes> {
+    crate::tieba::trending(&self.client).await
+  }
 }
 
 #[cfg(feature = "blocking")]
@@ -94,6 +98,10 @@ impl BlockTrendingClient {
 
   pub fn trending_tencent(&self) -> Result<TrendingsRes> {
     crate::tencent::blocking_trending(&self.client)
+  }
+
+  pub fn trending_tieba(&self) -> Result<TrendingsRes> {
+    crate::tieba::blocking_trending(&self.client)
   }
 }
 
@@ -152,6 +160,9 @@ pub enum PlatformType {
   #[serde(rename = "tencent")]
   Tencent,
 
+  #[serde(rename = "tieba")]
+  Tieba,
+
   #[serde(untagged)]
   Other(String),
 }
@@ -163,6 +174,7 @@ impl PlatformType {
       PlatformType::Weibo => "weibo",
       PlatformType::Toutiao => "toutiao",
       PlatformType::Tencent => "tencent",
+      PlatformType::Tieba => "tieba",
       PlatformType::Other(other) => other.as_str(),
     }
   }

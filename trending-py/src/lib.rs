@@ -183,5 +183,10 @@ mod trending {
       let res = self.client.trending_tencent()?;
       Ok(res.into())
     }
+
+    pub fn trending_tieba(&self) -> Result<TrendingsRes> {
+      let res = self.client.trending_tieba()?;
+      Ok(res.into())
+    }
   }
 }

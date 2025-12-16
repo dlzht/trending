@@ -35,7 +35,7 @@ pub enum TrendingError {
     #[snafu(implicit)]
     location: Location,
   },
-  
+
   #[snafu(display("Invalid http header value: {}", value))]
   ReqwestHeaderValue {
     value: String,

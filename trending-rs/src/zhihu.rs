@@ -49,7 +49,6 @@ struct ZhihuTarget {
 
   #[serde(rename = "detail_text", skip_serializing_if = "Option::is_none")]
   detail_text: Option<String>,
-  
   // #[serde(rename = "url")]
   // url: String,
 }
@@ -58,7 +57,10 @@ impl From<ZhihuData> for TrendingRes {
   fn from(value: ZhihuData) -> Self {
     Self {
       title: value.target.title,
-      url: format!("https://www.zhihu.com/{}/{}", value.target.kind, value.target.id),
+      url: format!(
+        "https://www.zhihu.com/{}/{}",
+        value.target.kind, value.target.id
+      ),
       trend: not_empty_str(value.target.detail_text),
     }
   }

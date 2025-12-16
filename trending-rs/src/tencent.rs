@@ -47,9 +47,9 @@ struct TencentNews {
 
   #[serde(rename = "surl")]
   url: Option<String>,
-  
+
   #[serde(rename = "ranking")]
-  ranking: Option<u32>
+  ranking: Option<u32>,
 }
 
 impl From<TencentNews> for TrendingRes {

@@ -13,7 +13,7 @@ async fn main() {
 
 async fn run_main() -> Result<()> {
   let client = TrendingClient::new();
-  if let Ok(res) = client.trending_zhihu().await {
+  if let Ok(res) = client.trending_tieba().await {
     println!("{:#?}", res.trendings.first());
   }
   Ok(())
