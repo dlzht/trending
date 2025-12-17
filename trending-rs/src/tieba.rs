@@ -25,25 +25,25 @@ pub fn blocking_trending(client: &BlockClient) -> Result<TrendingsRes> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TiebaRes {
+struct TiebaRes {
   #[serde(rename = "data")]
   data: TiebaData,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TiebaData {
+struct TiebaData {
   #[serde(rename = "bang_topic")]
   bang_topic: TiebaTopic,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TiebaTopic {
+struct TiebaTopic {
   #[serde(rename = "topic_list")]
   topic_list: Vec<TiebaItem>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TiebaItem {
+struct TiebaItem {
   #[serde(rename = "topic_name")]
   title: String,
 

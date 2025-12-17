@@ -26,7 +26,7 @@ pub fn block_trending(client: &BlockClient) -> Result<TrendingsRes> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct WeiboRes {
+struct WeiboRes {
   #[serde(rename = "status")]
   status: i32,
 
@@ -35,19 +35,19 @@ pub struct WeiboRes {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct WeiboData {
+struct WeiboData {
   #[serde(rename = "hotList", skip_serializing_if = "Vec::is_empty", default)]
   hot_list: Vec<WeiboHot>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct WeiboHot {
+struct WeiboHot {
   #[serde(rename = "info")]
   info: WeiboInfo,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct WeiboInfo {
+struct WeiboInfo {
   #[serde(rename = "title")]
   title: String,
 

@@ -26,7 +26,7 @@ pub fn blocking_trending(client: &BlockClient) -> Result<TrendingsRes> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TouTiaoRes {
+struct TouTiaoRes {
   #[serde(rename = "data")]
   data: Vec<TouTiaoData>,
 
@@ -35,7 +35,7 @@ pub struct TouTiaoRes {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TouTiaoData {
+struct TouTiaoData {
   #[serde(rename = "Title")]
   title: String,
 

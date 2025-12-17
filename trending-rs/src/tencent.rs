@@ -26,7 +26,7 @@ pub fn blocking_trending(client: &BlockClient) -> Result<TrendingsRes> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TencentRes {
+struct TencentRes {
   #[serde(rename = "idlist", skip_serializing_if = "Vec::is_empty", default)]
   list: Vec<TencentList>,
 }
