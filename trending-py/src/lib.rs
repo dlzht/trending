@@ -188,5 +188,10 @@ mod trending {
       let res = self.client.trending_tieba()?;
       Ok(res.into())
     }
+
+    pub fn trending_netease(&self) -> Result<TrendingsRes> {
+      let res = self.client.trending_netease()?;
+      Ok(res.into())
+    }
   }
 }

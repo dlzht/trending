@@ -13,8 +13,11 @@ async fn main() {
 
 async fn run_main() -> Result<()> {
   let client = TrendingClient::new();
-  if let Ok(res) = client.trending_tieba().await {
-    println!("{:#?}", res.trendings.first());
+  if let Ok(res) = client.trending_netease().await {
+    for trend in &res.trendings {
+      println!("{:?}", trend);
+    }
+    println!("{}", res.trendings.len());
   }
   Ok(())
 }
