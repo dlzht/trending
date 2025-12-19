@@ -193,5 +193,10 @@ mod trending {
       let res = self.client.trending_netease()?;
       Ok(res.into())
     }
+
+    pub fn trending_hupu(&self) -> Result<TrendingsRes> {
+      let res = self.client.trending_hupu()?;
+      Ok(res.into())
+    }
   }
 }

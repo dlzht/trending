@@ -59,6 +59,10 @@ impl TrendingClient {
   pub async fn trending_netease(&self) -> Result<TrendingsRes> {
     crate::netease::trending(&self.client).await
   }
+
+  pub async fn trending_hupu(&self) -> Result<TrendingsRes> {
+    crate::hupu::trending(&self.client).await
+  }
 }
 
 #[cfg(feature = "blocking")]
@@ -110,6 +114,10 @@ impl BlockTrendingClient {
 
   pub fn trending_netease(&self) -> Result<TrendingsRes> {
     crate::netease::blocking_trending(&self.client)
+  }
+
+  pub fn trending_hupu(&self) -> Result<TrendingsRes> {
+    crate::hupu::blocking_trending(&self.client)
   }
 }
 
@@ -174,6 +182,9 @@ pub enum PlatformType {
   #[serde(rename = "netease")]
   Netease,
 
+  #[serde(rename = "hupu")]
+  Hupu,
+
   #[serde(untagged)]
   Other(String),
 }
@@ -187,6 +198,7 @@ impl PlatformType {
       PlatformType::Tencent => "tencent",
       PlatformType::Tieba => "tieba",
       PlatformType::Netease => "netease",
+      PlatformType::Hupu => "hupu",
       PlatformType::Other(other) => other.as_str(),
     }
   }

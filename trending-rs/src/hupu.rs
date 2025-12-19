@@ -10,34 +10,39 @@ use crate::{
   errors::Result,
 };
 
-pub const TRENDING_ENDPOINT: &'static str = "https://m.163.com/fe/api/hot/news/flow";
+pub const TRENDING_ENDPOINT: &'static str =
+  "https://m.hupu.com/api/v2/bbs/topicThreads?topicId=1&page=1";
 
 pub async fn trending(client: &AsyncClient) -> Result<TrendingsRes> {
-  http_get::<EmptyType, EmptyType, NeteaseRes>(client, TRENDING_ENDPOINT, None, None, None)
+  http_get::<EmptyType, EmptyType, HupuRes>(client, TRENDING_ENDPOINT, None, None, None)
     .await
     .map(|r| r.into())
 }
 
 #[cfg(feature = "blocking")]
 pub fn blocking_trending(client: &BlockClient) -> Result<TrendingsRes> {
-  block_http_get::<EmptyType, EmptyType, NeteaseRes>(client, TRENDING_ENDPOINT, None, None, None)
+  block_http_get::<EmptyType, EmptyType, HupuRes>(client, TRENDING_ENDPOINT, None, None, None)
     .map(|r| r.into())
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct NeteaseRes {
+struct HupuRes {
   #[serde(rename = "data")]
-  data: NeteaseData,
+  data: HupuData,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct NeteaseData {
-  #[serde(rename = "list")]
-  list: Vec<NeteaseNews>,
+struct HupuData {
+  #[serde(
+    rename = "topicThreads",
+    skip_serializing_if = "Vec::is_empty",
+    default
+  )]
+  threads: Vec<HupuThread>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct NeteaseNews {
+struct HupuThread {
   #[serde(rename = "title")]
   title: String,
 
@@ -45,8 +50,8 @@ struct NeteaseNews {
   url: String,
 }
 
-impl From<NeteaseNews> for TrendingRes {
-  fn from(value: NeteaseNews) -> Self {
+impl From<HupuThread> for TrendingRes {
+  fn from(value: HupuThread) -> Self {
     Self {
       title: value.title,
       url: value.url,
@@ -55,11 +60,11 @@ impl From<NeteaseNews> for TrendingRes {
   }
 }
 
-impl From<NeteaseRes> for TrendingsRes {
-  fn from(value: NeteaseRes) -> Self {
+impl From<HupuRes> for TrendingsRes {
+  fn from(value: HupuRes) -> Self {
     Self {
-      platform: PlatformType::Netease,
-      trendings: value.data.list.into_iter().map(|r| r.into()).collect(),
+      platform: PlatformType::Hupu,
+      trendings: value.data.threads.into_iter().map(|r| r.into()).collect(),
     }
   }
 }

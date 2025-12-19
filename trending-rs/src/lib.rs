@@ -1,5 +1,6 @@
 pub mod common;
 pub mod errors;
+mod hupu;
 mod netease;
 mod tencent;
 mod tieba;

@@ -13,7 +13,7 @@ async fn main() {
 
 async fn run_main() -> Result<()> {
   let client = TrendingClient::new();
-  if let Ok(res) = client.trending_netease().await {
+  if let Ok(res) = client.trending_hupu().await {
     for trend in &res.trendings {
       println!("{:?}", trend);
     }
