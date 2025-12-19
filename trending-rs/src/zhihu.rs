@@ -70,7 +70,7 @@ impl From<ZhihuRes> for TrendingsRes {
   fn from(value: ZhihuRes) -> Self {
     Self {
       platform: PlatformType::Zhihu,
-      trendings: value.data.into_iter().map(ZhihuData::into).collect(),
+      result: value.data.into_iter().map(ZhihuData::into).collect(),
     }
   }
 }

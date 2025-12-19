@@ -64,7 +64,7 @@ impl From<HupuRes> for TrendingsRes {
   fn from(value: HupuRes) -> Self {
     Self {
       platform: PlatformType::Hupu,
-      trendings: value.data.threads.into_iter().map(|r| r.into()).collect(),
+      result: value.data.threads.into_iter().map(|r| r.into()).collect(),
     }
   }
 }

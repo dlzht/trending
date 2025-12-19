@@ -60,7 +60,7 @@ impl From<TouTiaoRes> for TrendingsRes {
   fn from(value: TouTiaoRes) -> Self {
     Self {
       platform: PlatformType::Toutiao,
-      trendings: value
+      result: value
         .data
         .into_iter()
         .chain(value.fixed_top_data.into_iter())

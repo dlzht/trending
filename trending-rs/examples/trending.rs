@@ -1,5 +1,5 @@
 use tokio;
-use trending::{common::TrendingClient, errors::Result};
+use trending::{client::AsyncClient, common::SearchReq, errors::Result};
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -12,12 +12,13 @@ async fn main() {
 }
 
 async fn run_main() -> Result<()> {
-  let client = TrendingClient::new();
-  if let Ok(res) = client.trending_hupu().await {
-    for trend in &res.trendings {
-      println!("{:?}", trend);
+  let client = AsyncClient::new();
+  let query: SearchReq = ("王力宏").into();
+  if let Ok(res) = client.search_netease(&query).await {
+    for item in &res.result {
+      println!("{:?}", item);
     }
-    println!("{}", res.trendings.len());
+    println!("{}", res.result.len());
   }
   Ok(())
 }

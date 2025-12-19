@@ -66,7 +66,7 @@ impl From<TencentRes> for TrendingsRes {
   fn from(value: TencentRes) -> Self {
     Self {
       platform: PlatformType::Tencent,
-      trendings: value
+      result: value
         .list
         .into_iter()
         .flat_map(|r| r.news.into_iter())

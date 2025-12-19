@@ -72,7 +72,7 @@ impl From<WeiboRes> for TrendingsRes {
   fn from(value: WeiboRes) -> Self {
     Self {
       platform: PlatformType::Weibo,
-      trendings: value
+      result: value
         .data
         .hot_list
         .into_iter()

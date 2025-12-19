@@ -68,7 +68,7 @@ impl From<TiebaRes> for TrendingsRes {
   fn from(value: TiebaRes) -> Self {
     Self {
       platform: PlatformType::Tencent,
-      trendings: value
+      result: value
         .data
         .bang_topic
         .topic_list

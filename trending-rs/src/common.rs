@@ -1,166 +1,10 @@
-use std::time::Duration;
-
 #[cfg(feature = "blocking")]
 use reqwest::blocking::Client as BlockClient;
-use reqwest::{
-  Client as AsyncClient, Method, Proxy,
-  header::{AsHeaderName, HeaderMap, HeaderName, HeaderValue},
-};
+use reqwest::{Client as AsyncClient, Method, header::HeaderMap};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
 use crate::errors::{ReqwestClientSnafu, Result};
-
-pub struct TrendingClient {
-  client: AsyncClient,
-}
-
-impl TrendingClient {
-  pub fn new() -> Self {
-    let client = AsyncClient::new();
-    Self { client }
-  }
-
-  pub fn new_with_options(options: ClientOptions) -> Result<Self> {
-    let mut client_builder = AsyncClient::builder();
-    if let Some(timeout) = options.timeout {
-      client_builder = client_builder.timeout(timeout);
-    }
-    if let Some(proxy) = options.proxy {
-      client_builder = client_builder.proxy(proxy);
-    }
-    let client = client_builder
-      .default_headers(options.headers)
-      .build()
-      .context(ReqwestClientSnafu)?;
-    Ok(TrendingClient { client })
-  }
-
-  pub async fn trending_zhihu(&self) -> Result<TrendingsRes> {
-    crate::zhihu::trending(&self.client).await
-  }
-
-  pub async fn trending_weibo(&self) -> Result<TrendingsRes> {
-    crate::weibo::trending(&self.client).await
-  }
-
-  pub async fn trending_toutiao(&self) -> Result<TrendingsRes> {
-    crate::toutiao::trending(&self.client).await
-  }
-
-  pub async fn trending_tencent(&self) -> Result<TrendingsRes> {
-    crate::tencent::trending(&self.client).await
-  }
-
-  pub async fn trending_tieba(&self) -> Result<TrendingsRes> {
-    crate::tieba::trending(&self.client).await
-  }
-
-  pub async fn trending_netease(&self) -> Result<TrendingsRes> {
-    crate::netease::trending(&self.client).await
-  }
-
-  pub async fn trending_hupu(&self) -> Result<TrendingsRes> {
-    crate::hupu::trending(&self.client).await
-  }
-}
-
-#[cfg(feature = "blocking")]
-pub struct BlockTrendingClient {
-  client: BlockClient,
-}
-
-#[cfg(feature = "blocking")]
-impl BlockTrendingClient {
-  pub fn new() -> Self {
-    let client = BlockClient::new();
-    Self { client }
-  }
-
-  pub fn new_with_options(options: ClientOptions) -> Result<Self> {
-    let mut client_builder = BlockClient::builder();
-    if let Some(timeout) = options.timeout {
-      client_builder = client_builder.timeout(timeout);
-    }
-    if let Some(proxy) = options.proxy {
-      client_builder = client_builder.proxy(proxy);
-    }
-    let client = client_builder
-      .default_headers(options.headers)
-      .build()
-      .context(ReqwestClientSnafu)?;
-    Ok(BlockTrendingClient { client })
-  }
-
-  pub fn trending_zhihu(&self) -> Result<TrendingsRes> {
-    crate::zhihu::block_trending(&self.client)
-  }
-
-  pub fn trending_weibo(&self) -> Result<TrendingsRes> {
-    crate::weibo::block_trending(&self.client)
-  }
-
-  pub fn trending_toutiao(&self) -> Result<TrendingsRes> {
-    crate::toutiao::blocking_trending(&self.client)
-  }
-
-  pub fn trending_tencent(&self) -> Result<TrendingsRes> {
-    crate::tencent::blocking_trending(&self.client)
-  }
-
-  pub fn trending_tieba(&self) -> Result<TrendingsRes> {
-    crate::tieba::blocking_trending(&self.client)
-  }
-
-  pub fn trending_netease(&self) -> Result<TrendingsRes> {
-    crate::netease::blocking_trending(&self.client)
-  }
-
-  pub fn trending_hupu(&self) -> Result<TrendingsRes> {
-    crate::hupu::blocking_trending(&self.client)
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct ClientOptions {
-  pub headers: HeaderMap,
-  pub timeout: Option<Duration>,
-  pub proxy: Option<Proxy>,
-}
-
-impl ClientOptions {
-  pub fn new() -> ClientOptions {
-    ClientOptions {
-      headers: HeaderMap::new(),
-      timeout: None,
-      proxy: None,
-    }
-  }
-
-  pub fn with_headers(mut self, headers: HeaderMap) -> Self {
-    self.headers.extend(headers);
-    self
-  }
-
-  pub fn with_header(mut self, key: HeaderName, value: HeaderValue) -> Self {
-    self.headers.insert(key, value);
-    self
-  }
-
-  pub fn with_proxy(mut self, proxy: Proxy) -> Self {
-    self.proxy = Some(proxy);
-    self
-  }
-
-  pub fn with_timeout(mut self, timeout: Duration) -> Self {
-    self.timeout = Some(timeout);
-    self
-  }
-
-  pub fn contains_header(&self, key: impl AsHeaderName) -> bool {
-    self.headers.contains_key(key)
-  }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlatformType {
@@ -209,8 +53,8 @@ pub struct TrendingsRes {
   #[serde(rename = "platform")]
   pub platform: PlatformType,
 
-  #[serde(rename = "trendings")]
-  pub trendings: Vec<TrendingRes>,
+  #[serde(rename = "trendings", skip_serializing_if = "Vec::is_empty", default)]
+  pub result: Vec<TrendingRes>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -223,6 +67,116 @@ pub struct TrendingRes {
 
   #[serde(rename = "trend")]
   pub trend: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SearchesRes {
+  #[serde(rename = "platform")]
+  pub platform: PlatformType,
+
+  #[serde(rename = "searches", skip_serializing_if = "Vec::is_empty", default)]
+  pub result: Vec<SearchRes>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum PageParam {
+  First,
+  Other(u32),
+}
+
+impl From<u32> for PageParam {
+  fn from(value: u32) -> Self {
+    Self::Other(value)
+  }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SearchReq {
+  #[serde(rename = "keyword")]
+  pub keyword: String,
+
+  #[serde(rename = "page")]
+  pub page: Option<PageParam>,
+
+  #[serde(rename = "size")]
+  pub size: Option<u32>,
+}
+
+impl SearchReq {
+  pub fn new(keyword: impl Into<String>) -> Self {
+    Self {
+      keyword: keyword.into(),
+      page: None,
+      size: None,
+    }
+  }
+
+  pub fn with_page(mut self, page: impl Into<PageParam>) -> Self {
+    self.page = Some(page.into());
+    self
+  }
+
+  pub fn with_size(mut self, size: u32) -> Self {
+    self.size = Some(size);
+    self
+  }
+}
+
+impl From<&str> for SearchReq {
+  fn from(value: &str) -> Self {
+    Self::new(value)
+  }
+}
+
+impl From<(&str, u32)> for SearchReq {
+  fn from(value: (&str, u32)) -> Self {
+    Self::new(value.0).with_page(value.1)
+  }
+}
+
+impl From<(&str, u32, u32)> for SearchReq {
+  fn from(value: (&str, u32, u32)) -> Self {
+    Self::new(value.0).with_page(value.1).with_size(value.2)
+  }
+}
+
+impl From<String> for SearchReq {
+  fn from(value: String) -> Self {
+    Self::new(value)
+  }
+}
+
+impl From<(String, u32)> for SearchReq {
+  fn from(value: (String, u32)) -> Self {
+    Self::new(value.0).with_page(value.1)
+  }
+}
+
+impl From<(String, u32, u32)> for SearchReq {
+  fn from(value: (String, u32, u32)) -> Self {
+    Self::new(value.0).with_page(value.1).with_size(value.2)
+  }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SearchRes {
+  #[serde(rename = "title")]
+  pub title: String,
+
+  #[serde(rename = "url")]
+  pub url: String,
+
+  #[serde(rename = "time")]
+  pub time: Option<u64>,
+
+  #[serde(rename = "images", skip_serializing_if = "Option::is_none")]
+  pub images: Option<Vec<String>>,
+
+  #[serde(rename = "videos", skip_serializing_if = "Option::is_none")]
+  pub videos: Option<Vec<String>>,
+
+  #[serde(rename = "audios", skip_serializing_if = "Option::is_none")]
+  pub audios: Option<Vec<String>>,
 }
 
 pub(crate) fn not_empty_str(text: Option<String>) -> Option<String> {

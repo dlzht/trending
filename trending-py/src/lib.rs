@@ -16,8 +16,9 @@ mod trending {
   };
   use snafu::ResultExt;
   use trending::{
+    client::{BlockClient as RBlockClient, ClientOptions as RClientOptions},
     common::{
-      BlockTrendingClient as RBlockClient, ClientOptions as RClientOptions,
+      PageParam, SearchReq as RSearchReq, SearchRes as RSearchRes, SearchesRes as RSearchesRes,
       TrendingRes as RTrendingRes, TrendingsRes as RTrendingsRes,
     },
     errors::{
@@ -58,6 +59,7 @@ mod trending {
 
   #[pymethods]
   impl ClientOptions {
+    
     #[new]
     pub fn new() -> Self {
       Self {
@@ -92,7 +94,7 @@ mod trending {
   }
 
   #[pyclass]
-  struct BlockTrendingClient {
+  struct BlockClient {
     client: RBlockClient,
   }
 
@@ -137,7 +139,7 @@ mod trending {
 
   impl From<RTrendingsRes> for TrendingsRes {
     fn from(value: RTrendingsRes) -> Self {
-      let trendings = value.trendings.into_iter().map(|r| r.into()).collect();
+      let trendings = value.result.into_iter().map(|r| r.into()).collect();
       Self {
         platform: value.platform.to_str().to_string(),
         trendings,
@@ -151,8 +153,116 @@ mod trending {
     }
   }
 
+  #[pyclass(str)]
+  #[derive(Debug, Clone)]
+  pub struct SearchReq {
+    #[pyo3(get, set)]
+    keyword: String,
+
+    #[pyo3(get, set)]
+    page: Option<u32>,
+
+    #[pyo3(get, set)]
+    size: Option<u32>,
+  }
+
   #[pymethods]
-  impl BlockTrendingClient {
+  impl SearchReq {
+    #[new]
+    #[pyo3(signature = (keyword, page = None, size = None))]
+    pub fn new(keyword: &str, page: Option<u32>, size: Option<u32>) -> Self {
+      Self {
+        keyword: keyword.to_string(),
+        page,
+        size,
+      }
+    }
+  }
+
+  impl Display for SearchReq {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+      write!(f, "{:?}", self)
+    }
+  }
+
+  impl From<SearchReq> for RSearchReq {
+    fn from(value: SearchReq) -> Self {
+      Self {
+        keyword: value.keyword,
+        page: value.page.map(|p| PageParam::Other(p)),
+        size: value.size,
+      }
+    }
+  }
+
+  #[pyclass(str)]
+  #[derive(Debug, Clone)]
+  pub struct SearchRes {
+    #[pyo3(get, set)]
+    pub title: String,
+
+    #[pyo3(get, set)]
+    pub url: String,
+
+    #[pyo3(get, set)]
+    pub time: Option<u64>,
+
+    #[pyo3(get, set)]
+    pub images: Option<Vec<String>>,
+
+    #[pyo3(get, set)]
+    pub videos: Option<Vec<String>>,
+
+    #[pyo3(get, set)]
+    pub audios: Option<Vec<String>>,
+  }
+
+  impl Display for SearchRes {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+      write!(f, "{:?}", self)
+    }
+  }
+
+  impl From<RSearchRes> for SearchRes {
+    fn from(value: RSearchRes) -> Self {
+      Self {
+        title: value.title,
+        url: value.url,
+        time: value.time,
+        images: value.images,
+        videos: value.videos,
+        audios: value.audios,
+      }
+    }
+  }
+
+  #[pyclass(str)]
+  #[derive(Debug, Clone)]
+  pub struct SearchesRes {
+    #[pyo3(get, set)]
+    pub platform: String,
+
+    #[pyo3(get, set)]
+    pub result: Vec<SearchRes>,
+  }
+
+  impl Display for SearchesRes {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+      write!(f, "{:?}", self)
+    }
+  }
+
+  impl From<RSearchesRes> for SearchesRes {
+    fn from(value: RSearchesRes) -> Self {
+      Self {
+        platform: value.platform.to_str().to_string(),
+        result: value.result.into_iter().map(|r| r.into()).collect(),
+      }
+    }
+  }
+
+  #[pymethods]
+  impl BlockClient {
     #[new]
     #[pyo3(signature = (options = None))]
     fn new(options: Option<ClientOptions>) -> Result<Self> {
@@ -191,6 +301,12 @@ mod trending {
 
     pub fn trending_netease(&self) -> Result<TrendingsRes> {
       let res = self.client.trending_netease()?;
+      Ok(res.into())
+    }
+
+    pub fn search_netease(&self, req: SearchReq) -> Result<SearchesRes> {
+      let req: RSearchReq = req.into();
+      let res = self.client.search_netease(&req)?;
       Ok(res.into())
     }
 
