@@ -9,6 +9,7 @@ resolver = "3"
 version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
+readme  = "README.md"
 
 [workspace.dependencies]
 trending = { path = "./trending-rs" }
