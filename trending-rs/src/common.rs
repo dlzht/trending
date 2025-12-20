@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[cfg(feature = "blocking")]
 use reqwest::blocking::Client as BlockClient;
 use reqwest::{Client as AsyncClient, Method, header::HeaderMap};
@@ -45,6 +47,12 @@ impl PlatformType {
       PlatformType::Hupu => "hupu",
       PlatformType::Other(other) => other.as_str(),
     }
+  }
+}
+
+impl Display for PlatformType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.to_str())
   }
 }
 

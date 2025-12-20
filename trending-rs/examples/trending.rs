@@ -13,12 +13,12 @@ async fn main() {
 
 async fn run_main() -> Result<()> {
   let client = AsyncClient::new();
-  let query: SearchReq = ("王力宏").into();
-  if let Ok(res) = client.search_netease(&query).await {
-    for item in &res.result {
-      println!("{:?}", item);
-    }
-    println!("{}", res.result.len());
+  
+  let req = SearchReq::new("ELON");
+  let res = client.search_netease(&req).await?;
+  println!("receive {} searches from {}", res.result.len(), res.platform);
+  for (index, search) in res.result.iter().enumerate() {
+    println!("{:2} -> {}", index, search.title);
   }
   Ok(())
 }
