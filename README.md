@@ -21,7 +21,7 @@ Trending is a library for retrieving trending information from media platforms. 
 trending = "0.1.0"
 
 # If you want to use it in a synchronous environment, enable `blocking` feature
-trending = { version = "0.1.0", features = ["blocking"] }
+trending = { version = "0.1", features = ["blocking"] }
 ```
 
 #### 2. Create AsyncClient
@@ -74,7 +74,7 @@ for (index, search) in res.result.iter().enumerate() {
 
 ```bash
 # add dependencies to the project
-uv add "trending==0.1.0"
+uv add "trending"
 ```
 
 #### 2. Create BlockClient
@@ -83,10 +83,6 @@ import * from trending
 
 # new with default options
 client = BlockClient()
-
-# or new with custom options
-let options = ClientOptions::new().with_timeout(Duration::from_secs(5));
-let client = AsyncClient::new_with_options(options);
 ```
 
 #### 3. Trending Query
