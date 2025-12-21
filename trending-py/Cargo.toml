@@ -7,7 +7,7 @@ readme.workspace  = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "trending_py"
+name = "trending"
 crate-type = ["cdylib"]
 doc = false
 

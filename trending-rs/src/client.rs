@@ -8,9 +8,8 @@ use reqwest::{
 };
 use snafu::ResultExt;
 
-use crate::common::SearchReq;
 use crate::{
-  common::{SearchesRes, TrendingsRes},
+  common::{SearchReq, SearchesRes, TrendingsRes},
   errors::{ReqwestClientSnafu, Result},
 };
 
@@ -53,6 +52,10 @@ impl AsyncClient {
 
   pub async fn trending_tencent(&self) -> Result<TrendingsRes> {
     crate::tencent::trending(&self.client).await
+  }
+
+  pub async fn search_tencent(&self, req: &SearchReq) -> Result<SearchesRes> {
+    crate::tencent::search(&self.client, req).await
   }
 
   pub async fn trending_tieba(&self) -> Result<TrendingsRes> {
@@ -113,6 +116,10 @@ impl BlockClient {
 
   pub fn trending_tencent(&self) -> Result<TrendingsRes> {
     crate::tencent::blocking_trending(&self.client)
+  }
+
+  pub fn search_tencent(&self, query: &SearchReq) -> Result<SearchesRes> {
+    crate::tencent::blocking_search(&self.client, query)
   }
 
   pub fn trending_tieba(&self) -> Result<TrendingsRes> {

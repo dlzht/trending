@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::common::block_http_get;
 use crate::{
   common::{
-    EmptyType, PageParam, PlatformType, SearchReq, SearchRes, SearchesRes, TrendingRes,
+    EmptyType, MediaData, PageParam, PlatformType, SearchReq, SearchRes, SearchesRes, TrendingRes,
     TrendingsRes, http_get,
   },
   errors::Result,
@@ -18,7 +18,7 @@ pub const SEARCH_ENDPOINT: &'static str =
   "https://gw.m.163.com/nc/api/v1/pc-wap/search?from=wap&needPcUrl=true";
 
 pub async fn trending(client: &AsyncClient) -> Result<TrendingsRes> {
-  http_get::<EmptyType, EmptyType, NeteaseRes>(client, TRENDING_ENDPOINT, None, None, None)
+  http_get::<EmptyType, EmptyType, NeteaseTrendingRes>(client, TRENDING_ENDPOINT, None, None, None)
     .await
     .map(|r| r.into())
 }
@@ -37,8 +37,14 @@ pub async fn search(client: &AsyncClient, req: &SearchReq) -> Result<SearchesRes
 
 #[cfg(feature = "blocking")]
 pub fn blocking_trending(client: &BlockClient) -> Result<TrendingsRes> {
-  block_http_get::<EmptyType, EmptyType, NeteaseRes>(client, TRENDING_ENDPOINT, None, None, None)
-    .map(|r| r.into())
+  block_http_get::<EmptyType, EmptyType, NeteaseTrendingRes>(
+    client,
+    TRENDING_ENDPOINT,
+    None,
+    None,
+    None,
+  )
+  .map(|r| r.into())
 }
 
 #[cfg(feature = "blocking")]
@@ -54,19 +60,19 @@ pub fn blocking_search(client: &BlockClient, req: &SearchReq) -> Result<Searches
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct NeteaseRes {
+struct NeteaseTrendingRes {
   #[serde(rename = "data")]
-  data: NeteaseData,
+  data: NeteaseTrendingData,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct NeteaseData {
+struct NeteaseTrendingData {
   #[serde(rename = "list")]
-  list: Vec<NeteaseNews>,
+  list: Vec<NeteaseTrendingNews>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct NeteaseNews {
+struct NeteaseTrendingNews {
   #[serde(rename = "title")]
   title: String,
 
@@ -74,8 +80,8 @@ struct NeteaseNews {
   url: String,
 }
 
-impl From<NeteaseNews> for TrendingRes {
-  fn from(value: NeteaseNews) -> Self {
+impl From<NeteaseTrendingNews> for TrendingRes {
+  fn from(value: NeteaseTrendingNews) -> Self {
     Self {
       title: value.title,
       url: value.url,
@@ -84,8 +90,8 @@ impl From<NeteaseNews> for TrendingRes {
   }
 }
 
-impl From<NeteaseRes> for TrendingsRes {
-  fn from(value: NeteaseRes) -> Self {
+impl From<NeteaseTrendingRes> for TrendingsRes {
+  fn from(value: NeteaseTrendingRes) -> Self {
     Self {
       platform: PlatformType::Netease,
       result: value.data.list.into_iter().map(|r| r.into()).collect(),
@@ -140,7 +146,7 @@ struct NeteaseSearchRes {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct NeteaseSearchData {
-  #[serde(rename = "result")]
+  #[serde(rename = "result", skip_serializing_if = "Vec::is_empty", default)]
   result: Vec<NeteaseSearchResult>,
 }
 
@@ -155,7 +161,7 @@ struct NeteaseSearchResult {
   #[serde(rename = "ptime")]
   time: String,
 
-  #[serde(rename = "imgurl")]
+  #[serde(rename = "imgurl", skip_serializing_if = "Option::is_none", default)]
   img_url: Option<Vec<String>>,
 }
 
@@ -165,9 +171,9 @@ impl From<NeteaseSearchResult> for SearchRes {
       title: value.title.replace("<em>", "").replace("</em>", ""),
       url: value.url,
       time: Some(1),
-      images: value.img_url,
-      videos: None,
-      audios: None,
+      medias: value
+        .img_url
+        .map(|s| s.into_iter().map(|m| MediaData::new_image(m)).collect()),
     }
   }
 }

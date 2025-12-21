@@ -18,8 +18,8 @@ mod trending {
   use trending::{
     client::{BlockClient as RBlockClient, ClientOptions as RClientOptions},
     common::{
-      PageParam, SearchReq as RSearchReq, SearchRes as RSearchRes, SearchesRes as RSearchesRes,
-      TrendingRes as RTrendingRes, TrendingsRes as RTrendingsRes,
+      MediaData as RMediaData, PageParam, SearchReq as RSearchReq, SearchRes as RSearchRes,
+      SearchesRes as RSearchesRes, TrendingRes as RTrendingRes, TrendingsRes as RTrendingsRes,
     },
     errors::{
       ReqwestClientSnafu, ReqwestHeaderNameSnafu, ReqwestHeaderValueSnafu,
@@ -59,7 +59,6 @@ mod trending {
 
   #[pymethods]
   impl ClientOptions {
-    
     #[new]
     pub fn new() -> Self {
       Self {
@@ -134,15 +133,15 @@ mod trending {
     platform: String,
 
     #[pyo3(get, set)]
-    trendings: Vec<TrendingRes>,
+    result: Vec<TrendingRes>,
   }
 
   impl From<RTrendingsRes> for TrendingsRes {
     fn from(value: RTrendingsRes) -> Self {
-      let trendings = value.result.into_iter().map(|r| r.into()).collect();
+      let result = value.result.into_iter().map(|r| r.into()).collect();
       Self {
         platform: value.platform.to_str().to_string(),
-        trendings,
+        result,
       }
     }
   }
@@ -197,24 +196,47 @@ mod trending {
 
   #[pyclass(str)]
   #[derive(Debug, Clone)]
+  pub struct MediaData {
+    #[pyo3(get, set)]
+    url: String,
+
+    #[pyo3(get, set)]
+    kind: String,
+
+    #[pyo3(get, set)]
+    desc: Option<String>,
+  }
+
+  impl Display for MediaData {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+      write!(f, "{:?}", self)
+    }
+  }
+
+  impl From<RMediaData> for MediaData {
+    fn from(value: RMediaData) -> Self {
+      Self {
+        url: value.url,
+        kind: value.kind.as_str().to_string(),
+        desc: value.desc,
+      }
+    }
+  }
+
+  #[pyclass(str)]
+  #[derive(Debug, Clone)]
   pub struct SearchRes {
     #[pyo3(get, set)]
-    pub title: String,
+    title: String,
 
     #[pyo3(get, set)]
-    pub url: String,
+    url: String,
 
     #[pyo3(get, set)]
-    pub time: Option<u64>,
+    time: Option<u64>,
 
     #[pyo3(get, set)]
-    pub images: Option<Vec<String>>,
-
-    #[pyo3(get, set)]
-    pub videos: Option<Vec<String>>,
-
-    #[pyo3(get, set)]
-    pub audios: Option<Vec<String>>,
+    medias: Option<Vec<MediaData>>,
   }
 
   impl Display for SearchRes {
@@ -229,9 +251,9 @@ mod trending {
         title: value.title,
         url: value.url,
         time: value.time,
-        images: value.images,
-        videos: value.videos,
-        audios: value.audios,
+        medias: value
+          .medias
+          .map(|s| s.into_iter().map(|m| m.into()).collect()),
       }
     }
   }
@@ -240,10 +262,10 @@ mod trending {
   #[derive(Debug, Clone)]
   pub struct SearchesRes {
     #[pyo3(get, set)]
-    pub platform: String,
+    platform: String,
 
     #[pyo3(get, set)]
-    pub result: Vec<SearchRes>,
+    result: Vec<SearchRes>,
   }
 
   impl Display for SearchesRes {
@@ -291,6 +313,12 @@ mod trending {
 
     pub fn trending_tencent(&self) -> Result<TrendingsRes> {
       let res = self.client.trending_tencent()?;
+      Ok(res.into())
+    }
+
+    pub fn search_tecent(&self, req: SearchReq) -> Result<SearchesRes> {
+      let req: RSearchReq = req.into();
+      let res = self.client.search_tencent(&req)?;
       Ok(res.into())
     }
 

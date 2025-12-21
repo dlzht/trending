@@ -177,14 +177,77 @@ pub struct SearchRes {
   #[serde(rename = "time")]
   pub time: Option<u64>,
 
-  #[serde(rename = "images", skip_serializing_if = "Option::is_none")]
-  pub images: Option<Vec<String>>,
+  #[serde(rename = "medias", skip_serializing_if = "Option::is_none")]
+  pub medias: Option<Vec<MediaData>>,
+}
 
-  #[serde(rename = "videos", skip_serializing_if = "Option::is_none")]
-  pub videos: Option<Vec<String>>,
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MediaData {
+  #[serde(rename = "url")]
+  pub url: String,
 
-  #[serde(rename = "audios", skip_serializing_if = "Option::is_none")]
-  pub audios: Option<Vec<String>>,
+  #[serde(rename = "kind")]
+  pub kind: MediaType,
+
+  #[serde(rename = "desc", skip_serializing_if = "Option::is_none", default)]
+  pub desc: Option<String>,
+}
+
+impl MediaData {
+  pub fn new_video(url: impl Into<String>) -> Self {
+    Self {
+      url: url.into(),
+      kind: MediaType::Video,
+      desc: None,
+    }
+  }
+
+  pub fn new_audio(url: impl Into<String>) -> Self {
+    Self {
+      url: url.into(),
+      kind: MediaType::Audio,
+      desc: None,
+    }
+  }
+
+  pub fn new_image(url: impl Into<String>) -> Self {
+    Self {
+      url: url.into(),
+      kind: MediaType::Image,
+      desc: None,
+    }
+  }
+
+  pub fn with_desc(mut self, desc: impl Into<String>) -> Self {
+    self.desc = Some(desc.into());
+    self
+  }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum MediaType {
+  #[serde(rename = "video")]
+  Video,
+
+  #[serde(rename = "audio")]
+  Audio,
+
+  #[serde(rename = "image")]
+  Image,
+
+  #[serde(untagged)]
+  Other(String),
+}
+
+impl MediaType {
+  pub fn as_str(&self) -> &str {
+    match self {
+      MediaType::Video => "viode",
+      MediaType::Audio => "audio",
+      MediaType::Image => "image",
+      MediaType::Other(other) => other.as_str(),
+    }
+  }
 }
 
 pub(crate) fn not_empty_str(text: Option<String>) -> Option<String> {
@@ -206,12 +269,12 @@ pub(crate) async fn http_get<
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
-  json: Option<&B>,
+  body: Option<HttpBody<&B>>,
 ) -> Result<R> {
-  http_execute(client, Method::GET, url, headers, queries, json).await
+  http_execute(client, Method::GET, url, headers, queries, body).await
 }
 
-pub(crate) async fn _http_post<
+pub(crate) async fn http_post<
   Q: Serialize + ?Sized,
   B: Serialize + ?Sized,
   R: for<'de> Deserialize<'de>,
@@ -220,9 +283,9 @@ pub(crate) async fn _http_post<
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
-  json: Option<&B>,
+  body: Option<HttpBody<&B>>,
 ) -> Result<R> {
-  http_execute(client, Method::POST, url, headers, queries, json).await
+  http_execute(client, Method::POST, url, headers, queries, body).await
 }
 
 async fn http_execute<
@@ -235,7 +298,7 @@ async fn http_execute<
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
-  json: Option<&B>,
+  body: Option<HttpBody<&B>>,
 ) -> Result<R> {
   let mut req = client.request(method, url);
   if let Some(headers) = headers {
@@ -244,8 +307,11 @@ async fn http_execute<
   if let Some(queries) = queries {
     req = req.query(queries);
   }
-  if let Some(json) = json {
-    req = req.json(json);
+  if let Some(body) = body {
+    match body {
+      HttpBody::Json(json) => req = req.json(json),
+      HttpBody::Form(form) => req = req.form(form),
+    }
   }
   let res = req
     .send()
@@ -267,13 +333,13 @@ pub(crate) fn block_http_get<
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
-  json: Option<&B>,
+  body: Option<HttpBody<&B>>,
 ) -> Result<R> {
-  block_http_execute(client, Method::GET, url, headers, queries, json)
+  block_http_execute(client, Method::GET, url, headers, queries, body)
 }
 
 #[cfg(feature = "blocking")]
-pub(crate) fn _block_http_post<
+pub(crate) fn block_http_post<
   Q: Serialize + ?Sized,
   B: Serialize + ?Sized,
   R: for<'de> Deserialize<'de>,
@@ -282,9 +348,9 @@ pub(crate) fn _block_http_post<
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
-  json: Option<&B>,
+  body: Option<HttpBody<&B>>,
 ) -> Result<R> {
-  block_http_execute(client, Method::POST, url, headers, queries, json)
+  block_http_execute(client, Method::POST, url, headers, queries, body)
 }
 
 #[cfg(feature = "blocking")]
@@ -298,7 +364,7 @@ fn block_http_execute<
   url: &str,
   headers: Option<HeaderMap>,
   queries: Option<&Q>,
-  json: Option<&B>,
+  body: Option<HttpBody<&B>>,
 ) -> Result<R> {
   let mut req = client.request(method, url);
   if let Some(headers) = headers {
@@ -307,8 +373,11 @@ fn block_http_execute<
   if let Some(queries) = queries {
     req = req.query(queries);
   }
-  if let Some(json) = json {
-    req = req.json(json);
+  if let Some(body) = body {
+    match body {
+      HttpBody::Json(json) => req = req.json(&json),
+      HttpBody::Form(form) => req = req.form(&form),
+    }
   }
   let res = req
     .send()
@@ -320,3 +389,19 @@ fn block_http_execute<
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub(crate) struct EmptyType;
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+pub(crate) enum HttpBody<T> {
+  Json(T),
+  Form(T),
+}
+
+impl<T> HttpBody<T> {
+  #[allow(dead_code)]
+  pub(crate) fn json(json: T) -> HttpBody<T> {
+    HttpBody::<T>::Json(json)
+  }
+  pub(crate) fn form(form: T) -> HttpBody<T> {
+    HttpBody::Form(form)
+  }
+}
